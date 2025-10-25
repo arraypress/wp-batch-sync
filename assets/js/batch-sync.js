@@ -1,0 +1,418 @@
+/**
+ * Batch Sync - Modal JavaScript
+ *
+ * Handles batch synchronization with modal UI.
+ *
+ * @package ArrayPress\BatchSync
+ * @version 1.0.0
+ * @requires jQuery
+ */
+
+(function ($) {
+    'use strict';
+
+    /**
+     * Batch Sync Client
+     */
+    class BatchSyncClient {
+        /**
+         * Constructor
+         *
+         * @param {Object} config Configuration
+         */
+        constructor(config) {
+            this.config = {
+                ajaxUrl: window.ajaxurl || '',
+                prefix: '',
+                syncId: '',
+                nonce: '',
+                limit: 10,
+                singular: 'item',
+                plural: 'items',
+                options: {},
+                onProgress: null,
+                onComplete: null,
+                onError: null,
+                onBatchComplete: null,
+                ...config
+            };
+
+            this.aborted = false;
+            this.totalProcessed = 0;
+            this.totalFailed = 0;
+        }
+
+        /**
+         * Sync all items in batches
+         */
+        async syncAll(options = {}) {
+            let startingAfter = '';
+            let hasMore = true;
+            let batchNum = 0;
+            let estimatedTotal = 0;
+
+            this.aborted = false;
+            this.totalProcessed = 0;
+            this.totalFailed = 0;
+
+            while (hasMore && !this.aborted) {
+                try {
+                    batchNum++;
+                    const response = await this.syncBatch(startingAfter, options);
+
+                    // Update estimated total
+                    if (response.has_more) {
+                        estimatedTotal = Math.max(estimatedTotal, this.totalProcessed + response.processed + 50);
+                    } else {
+                        estimatedTotal = this.totalProcessed + response.processed;
+                    }
+
+                    // Process items
+                    if (response.items && response.items.length > 0) {
+                        if (this.config.onBatchComplete) {
+                            await this.config.onBatchComplete(response.items, batchNum);
+                        }
+                    }
+
+                    this.totalProcessed += response.processed || 0;
+                    this.totalFailed += response.failed || 0;
+
+                    hasMore = response.has_more;
+                    startingAfter = response.last_id;
+
+                    // Progress callback
+                    if (this.config.onProgress) {
+                        this.config.onProgress({
+                            processed: this.totalProcessed,
+                            failed: this.totalFailed,
+                            total: this.totalProcessed + this.totalFailed,
+                            estimatedTotal: estimatedTotal,
+                            hasMore: hasMore,
+                            batchNum: batchNum,
+                            currentBatch: response.items || []
+                        });
+                    }
+
+                } catch (error) {
+                    if (this.config.onError) {
+                        this.config.onError(error);
+                    }
+                    break;
+                }
+            }
+
+            const finalStats = {
+                processed: this.totalProcessed,
+                failed: this.totalFailed,
+                total: this.totalProcessed + this.totalFailed,
+                batches: batchNum,
+                aborted: this.aborted
+            };
+
+            if (this.config.onComplete) {
+                this.config.onComplete(finalStats);
+            }
+
+            return finalStats;
+        }
+
+        /**
+         * Sync a single batch
+         */
+        async syncBatch(startingAfter = '', options = {}) {
+            const mergedOptions = {...this.config.options, ...options};
+
+            const response = await $.ajax({
+                url: this.config.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: `batch_sync_${this.config.prefix}`,
+                    _wpnonce: this.config.nonce,
+                    sync_id: this.config.syncId,
+                    starting_after: startingAfter,
+                    limit: this.config.limit,
+                    options: JSON.stringify(mergedOptions)
+                }
+            });
+
+            if (!response.success) {
+                throw new Error(response.data || 'Sync failed');
+            }
+
+            return response.data;
+        }
+
+        /**
+         * Abort sync
+         */
+        abort() {
+            this.aborted = true;
+        }
+
+        /**
+         * Check if aborted
+         */
+        isAborted() {
+            return this.aborted;
+        }
+    }
+
+    /**
+     * Modal Manager
+     */
+    const ModalManager = {
+        /**
+         * Initialize all buttons
+         */
+        init() {
+            this.bindButtons();
+        },
+
+        /**
+         * Bind click handlers to buttons
+         */
+        bindButtons() {
+            $(document).on('click', '.batch-sync-trigger', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                this.openModal($button);
+            });
+
+            $(document).on('click', '.batch-sync-modal-close', (e) => {
+                e.preventDefault();
+                this.closeModal($(e.currentTarget).closest('.batch-sync-modal'));
+            });
+
+            $(document).on('click', '.batch-sync-modal-backdrop', (e) => {
+                this.closeModal($(e.currentTarget).closest('.batch-sync-modal'));
+            });
+
+            $(document).on('click', '.batch-sync-start', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                const $modal = $button.closest('.batch-sync-modal');
+                this.startSync($modal);
+            });
+        },
+
+        /**
+         * Open modal
+         */
+        openModal($button) {
+            const prefix = $button.data('sync-prefix');
+            const syncId = $button.data('sync-id');
+            const nonce = $button.data('sync-nonce');
+
+            const modalId = `#batch-sync-modal-${prefix}-${syncId}`;
+            const $modal = $(modalId);
+
+            if (!$modal.length) {
+                console.error('Modal not found:', modalId);
+                return;
+            }
+
+            // Store config on modal
+            $modal.data('sync-config', {
+                prefix: prefix,
+                syncId: syncId,
+                nonce: nonce
+            });
+
+            // Reset modal state
+            this.resetModal($modal);
+
+            // Show modal
+            $modal.fadeIn(200);
+            $('body').addClass('batch-sync-modal-open');
+        },
+
+        /**
+         * Close modal
+         */
+        closeModal($modal) {
+            const $startButton = $modal.find('.batch-sync-start');
+
+            // Check if sync is running
+            if ($startButton.prop('disabled')) {
+                const config = window.batchSyncConfig || {};
+                if (!confirm(config.strings?.confirmCancel || 'Cancel sync?')) {
+                    return;
+                }
+
+                // Abort sync
+                const client = $modal.data('syncClient');
+                if (client) {
+                    client.abort();
+                }
+            }
+
+            $modal.fadeOut(200);
+            $('body').removeClass('batch-sync-modal-open');
+        },
+
+        /**
+         * Reset modal state
+         */
+        resetModal($modal) {
+            $modal.find('.batch-sync-percentage').text('0%');
+            $modal.find('.batch-sync-current').text('0');
+            $modal.find('.batch-sync-total').text('0');
+            $modal.find('.batch-sync-progress-fill').css('width', '0%');
+            $modal.find('.batch-sync-status').empty();
+            $modal.find('.batch-sync-log-entries').empty();
+            $modal.find('.batch-sync-start').prop('disabled', false);
+        },
+
+        /**
+         * Start sync
+         */
+        async startSync($modal) {
+            const syncConfig = $modal.data('sync-config');
+            const config = window.batchSyncConfig || {};
+            const handlerConfig = config.handlers?.[syncConfig.syncId] || {};
+            const strings = config.strings || {};
+
+            const $startButton = $modal.find('.batch-sync-start');
+            const $percentage = $modal.find('.batch-sync-percentage');
+            const $current = $modal.find('.batch-sync-current');
+            const $total = $modal.find('.batch-sync-total');
+            const $progress = $modal.find('.batch-sync-progress-fill');
+            const $status = $modal.find('.batch-sync-status');
+            const $log = $modal.find('.batch-sync-log-entries');
+
+            // Disable start button
+            $startButton.prop('disabled', true);
+            $startButton.find('.dashicons').addClass('batch-sync-spin');
+
+            // Create sync client
+            const client = new BatchSyncClient({
+                ajaxUrl: config.ajaxUrl,
+                prefix: syncConfig.prefix,
+                syncId: syncConfig.syncId,
+                nonce: syncConfig.nonce,
+                limit: handlerConfig.limit || 10,
+                singular: handlerConfig.singular || 'item',
+                plural: handlerConfig.plural || 'items',
+
+                onProgress(stats) {
+                    // Update progress
+                    const percent = stats.estimatedTotal > 0
+                        ? Math.min(95, Math.round((stats.total / stats.estimatedTotal) * 100))
+                        : 0;
+
+                    $progress.css('width', percent + '%');
+                    $percentage.text(percent + '%');
+                    $current.text(stats.total);
+                    $total.text(stats.estimatedTotal);
+                },
+
+                async onBatchComplete(items) {
+                    // Animate each item
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        const itemName = item.name || item.id || 'Item';
+                        const hasError = item.error && item.error !== null;
+
+                        // Update status
+                        $status.text((hasError ? strings.error : strings.processing) + ' ' + itemName);
+
+                        // Add log entry
+                        addLogEntry($log, itemName, hasError ? 'error' : 'success', item.error);
+
+                        // Small delay for animation
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                },
+
+                onComplete(stats) {
+                    // Final progress
+                    $progress.css('width', '100%');
+                    $percentage.text('100%');
+                    $current.text(stats.total);
+                    $total.text(stats.total);
+
+                    // Status message
+                    const itemName = stats.processed === 1 ? handlerConfig.singular : handlerConfig.plural;
+                    let message;
+
+                    if (stats.aborted) {
+                        message = strings.error + ' Sync cancelled.';
+                        $status.html(`<span class="batch-sync-error">${message}</span>`);
+                    } else if (stats.failed === 0) {
+                        message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}.`;
+                        $status.html(`<span class="batch-sync-success">${message}</span>`);
+                    } else {
+                        message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}, ${stats.failed} ${strings.failed}.`;
+                        $status.html(`<span class="batch-sync-warning">${message}</span>`);
+                    }
+
+                    // Add final log entry
+                    addLogEntry($log, message, stats.failed > 0 ? 'warning' : 'success');
+
+                    // Re-enable button
+                    $startButton.prop('disabled', false);
+                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                },
+
+                onError(error) {
+                    $status.html(`<span class="batch-sync-error">${strings.error} ${error.message}</span>`);
+                    addLogEntry($log, error.message, 'error');
+
+                    $startButton.prop('disabled', false);
+                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                }
+            });
+
+            // Store client on modal
+            $modal.data('syncClient', client);
+
+            // Start sync
+            await client.syncAll();
+        }
+    };
+
+    /**
+     * Add log entry
+     */
+    function addLogEntry($log, message, status = 'info', errorDetail = null) {
+        const timestamp = new Date().toLocaleTimeString();
+        const icons = {
+            'success': '✓',
+            'error': '✗',
+            'info': 'ℹ',
+            'warning': '⚠'
+        };
+
+        let fullMessage = message;
+        if (errorDetail) {
+            fullMessage += ' - ' + errorDetail;
+        }
+
+        const $entry = $(`
+            <div class="batch-sync-log-entry batch-sync-log-${status}">
+                <span class="batch-sync-log-time">${timestamp}</span>
+                <span class="batch-sync-log-icon">${icons[status] || 'ℹ'}</span>
+                <span class="batch-sync-log-message">${fullMessage}</span>
+            </div>
+        `);
+
+        $log.append($entry);
+        $log.scrollTop($log[0].scrollHeight);
+
+        // Limit entries
+        const entries = $log.find('.batch-sync-log-entry');
+        if (entries.length > 100) {
+            entries.slice(0, entries.length - 100).remove();
+        }
+    }
+
+    // Initialize on ready
+    $(function () {
+        ModalManager.init();
+    });
+
+    // Export
+    window.BatchSyncClient = BatchSyncClient;
+    window.BatchSyncModal = ModalManager;
+
+})(jQuery);

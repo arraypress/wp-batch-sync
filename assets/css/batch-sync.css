@@ -1,0 +1,343 @@
+/**
+ * Batch Sync - Modal Styles
+ *
+ * @package ArrayPress\BatchSync
+ * @version 1.0.0
+ */
+
+/* ==========================================================================
+   Button
+   ========================================================================== */
+
+.batch-sync-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.batch-sync-trigger .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.batch-sync-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100000;
+    overflow: auto;
+}
+
+.batch-sync-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100001;
+}
+
+.batch-sync-modal-content {
+    position: relative;
+    z-index: 100002;
+    background: #fff;
+    width: 90%;
+    max-width: 600px;
+    margin: 50px auto;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Header */
+.batch-sync-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #ddd;
+}
+
+.batch-sync-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.4;
+}
+
+.batch-sync-modal-close {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.batch-sync-modal-close:hover {
+    color: #000;
+}
+
+.batch-sync-modal-close .dashicons {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+}
+
+/* Body */
+.batch-sync-modal-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.batch-sync-description {
+    margin: 0 0 20px;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Stats */
+.batch-sync-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.batch-sync-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.batch-sync-stat-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.batch-sync-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2271b1;
+}
+
+/* Progress Bar */
+.batch-sync-progress-bar {
+    width: 100%;
+    height: 24px;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.batch-sync-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1 0%, #135e96 100%);
+    transition: width 0.3s ease;
+}
+
+/* Status */
+.batch-sync-status {
+    font-size: 14px;
+    min-height: 24px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border-left: 3px solid #2271b1;
+}
+
+.batch-sync-status:empty {
+    display: none;
+}
+
+.batch-sync-status .batch-sync-success {
+    color: #00a32a;
+}
+
+.batch-sync-status .batch-sync-error {
+    color: #d63638;
+}
+
+.batch-sync-status .batch-sync-warning {
+    color: #dba617;
+}
+
+/* Log */
+.batch-sync-log {
+    margin-top: 20px;
+}
+
+.batch-sync-log h3 {
+    font-size: 14px;
+    margin: 0 0 10px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.batch-sync-log-entries {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.batch-sync-log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.batch-sync-log-entry:last-child {
+    margin-bottom: 0;
+}
+
+.batch-sync-log-time {
+    color: #757575;
+    font-family: monospace;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+.batch-sync-log-icon {
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.batch-sync-log-message {
+    flex: 1;
+    word-break: break-word;
+}
+
+/* Log status colors */
+.batch-sync-log-success .batch-sync-log-icon {
+    color: #00a32a;
+}
+
+.batch-sync-log-error .batch-sync-log-icon {
+    color: #d63638;
+}
+
+.batch-sync-log-warning .batch-sync-log-icon {
+    color: #dba617;
+}
+
+.batch-sync-log-info .batch-sync-log-icon {
+    color: #2271b1;
+}
+
+/* Footer */
+.batch-sync-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 24px;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.batch-sync-modal-footer .button {
+    margin: 0;
+}
+
+/* Spinning animation */
+.batch-sync-spin {
+    animation: batch-sync-spin 1s linear infinite;
+}
+
+@keyframes batch-sync-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================================================
+   Body State
+   ========================================================================== */
+
+body.batch-sync-modal-open {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .batch-sync-modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+
+    .batch-sync-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .batch-sync-modal-body {
+        max-height: 50vh;
+    }
+
+    .batch-sync-log-entries {
+        max-height: 150px;
+    }
+
+    .batch-sync-modal-footer {
+        flex-direction: column;
+    }
+
+    .batch-sync-modal-footer .button {
+        width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Scrollbar Styling (optional)
+   ========================================================================== */
+
+.batch-sync-log-entries::-webkit-scrollbar {
+    width: 8px;
+}
+
+.batch-sync-log-entries::-webkit-scrollbar-track {
+    background: #f0f0f1;
+    border-radius: 4px;
+}
+
+.batch-sync-log-entries::-webkit-scrollbar-thumb {
+    background: #c3c4c7;
+    border-radius: 4px;
+}
+
+.batch-sync-log-entries::-webkit-scrollbar-thumb:hover {
+    background: #a7aaad;
+}

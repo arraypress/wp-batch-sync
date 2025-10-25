@@ -1,0 +1,36 @@
+{
+  "name": "arraypress/wp-batch-sync",
+  "description": "Simple batch synchronization library for WordPress with modal UI",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://github.com/arraypress/wp-batch-sync/",
+  "authors": [
+    {
+      "name": "David Sherlock",
+      "homepage": "https://arraypress.com/"
+    }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "arraypress/wp-composer-assets": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "ArrayPress\\BatchSync\\": "src/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "keywords": [
+    "wordpress",
+    "batch",
+    "sync",
+    "synchronization",
+    "modal",
+    "ajax"
+  ]
+}
