@@ -10,7 +10,7 @@
    ========================================================================== */
 
 .batch-sync-trigger {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     align-content: center;
     gap: 6px;
@@ -103,6 +103,26 @@
     color: #666;
     font-size: 14px;
     line-height: 1.6;
+}
+
+/* Dry Run Banner */
+.batch-sync-dry-run-banner {
+    background: #fef7e5;
+    border: 1px solid #f0b849;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6c5a00;
+}
+
+.batch-sync-dry-run-banner .dashicons {
+    color: #f0b849;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
 }
 
 /* Stats */

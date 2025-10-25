@@ -84,12 +84,13 @@ class Manager {
      * @type string   $button_text   Button text (default: "Sync Now")
      * @type string   $singular      Singular item name (e.g., "price")
      * @type string   $plural        Plural item name (e.g., "prices")
-     * @type int      $limit         Items per batch (default: 10)
+     * @type int      $limit         Items per batch - how many items to process at once (default: 10)
      * @type string   $capability    Required capability (default: 'manage_options')
      * @type string   $icon          Dashicon name (default: 'update')
      * @type array    $options       Default options passed to callback
      * @type bool     $auto_close    Auto-close modal on completion (default: false)
-     * @type string   $notice_target CSS selector for notice placement (e.g., '.wrap h1')
+     * @type string   $notice_target CSS selector for notice placement (default: '.wrap h1')
+     * @type bool     $dry_run_support Whether callback supports dry run mode (default: false)
      * }
      *
      * @return void
@@ -97,18 +98,19 @@ class Manager {
      */
     public function register( string $id, array $args ): void {
         $this->handlers[ $id ] = wp_parse_args( $args, [
-                'callback'      => '',
-                'title'         => __( 'Sync Data', 'arraypress' ),
-                'description'   => '',
-                'button_text'   => __( 'Sync Now', 'arraypress' ),
-                'singular'      => 'item',
-                'plural'        => 'items',
-                'limit'         => 10,
-                'capability'    => 'manage_options',
-                'icon'          => 'update',
-                'options'       => [],
-                'auto_close'    => false,
-                'notice_target' => '',
+                'callback'        => '',
+                'title'           => __( 'Sync Data', 'arraypress' ),
+                'description'     => '',
+                'button_text'     => __( 'Sync Now', 'arraypress' ),
+                'singular'        => 'item',
+                'plural'          => 'items',
+                'limit'           => 10,
+                'capability'      => 'manage_options',
+                'icon'            => 'update',
+                'options'         => [],
+                'auto_close'      => false,
+                'notice_target'   => '.wrap h1',
+                'dry_run_support' => false,
         ] );
     }
 
@@ -237,21 +239,18 @@ class Manager {
      * @since 1.0.0
      */
     private function get_handler_configs(): array {
-        $configs = [];
-
-        foreach ( $this->handlers as $id => $handler ) {
-            $configs[ $id ] = [
-                    'title'        => $handler['title'],
-                    'description'  => $handler['description'],
-                    'singular'     => $handler['singular'],
-                    'plural'       => $handler['plural'],
-                    'limit'        => $handler['limit'],
-                    'autoClose'    => $handler['auto_close'],
-                    'noticeTarget' => $handler['notice_target'],
+        return array_map( function ( $handler ) {
+            return [
+                    'title'         => $handler['title'],
+                    'description'   => $handler['description'],
+                    'singular'      => $handler['singular'],
+                    'plural'        => $handler['plural'],
+                    'limit'         => $handler['limit'],
+                    'autoClose'     => $handler['auto_close'],
+                    'noticeTarget'  => $handler['notice_target'],
+                    'dryRunSupport' => $handler['dry_run_support'],
             ];
-        }
-
-        return $configs;
+        }, $this->handlers );
     }
 
     /**
@@ -277,6 +276,11 @@ class Manager {
                 'status'          => __( 'Status', 'arraypress' ),
                 'activityLog'     => __( 'Activity Log', 'arraypress' ),
                 'noItems'         => __( 'No items to sync', 'arraypress' ),
+                'copyLog'         => __( 'Copy Log', 'arraypress' ),
+                'logCopied'       => __( 'Log copied to clipboard!', 'arraypress' ),
+                'runAgain'        => __( 'Run Again', 'arraypress' ),
+                'dryRunMode'      => __( 'DRY RUN MODE - No changes will be made', 'arraypress' ),
+                'dryRun'          => __( 'Dry Run', 'arraypress' ),
         ];
     }
 
@@ -343,6 +347,20 @@ class Manager {
                         <button type="button" class="button button-primary batch-sync-start">
                             <span class="dashicons dashicons-<?php echo esc_attr( $handler['icon'] ); ?>"></span>
                             <?php echo esc_html( $handler['button_text'] ); ?>
+                        </button>
+                        <?php if ( $handler['dry_run_support'] ): ?>
+                            <button type="button" class="button batch-sync-dry-run">
+                                <span class="dashicons dashicons-visibility"></span>
+                                <?php _e( 'Dry Run', 'arraypress' ); ?>
+                            </button>
+                        <?php endif; ?>
+                        <button type="button" class="button batch-sync-copy-log" style="display: none;">
+                            <span class="dashicons dashicons-clipboard"></span>
+                            <?php _e( 'Copy Log', 'arraypress' ); ?>
+                        </button>
+                        <button type="button" class="button batch-sync-run-again" style="display: none;">
+                            <span class="dashicons dashicons-update"></span>
+                            <?php _e( 'Run Again', 'arraypress' ); ?>
                         </button>
                         <button type="button" class="button batch-sync-modal-close">
                             <?php _e( 'Close', 'arraypress' ); ?>

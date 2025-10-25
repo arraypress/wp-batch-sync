@@ -191,7 +191,28 @@
                 e.preventDefault();
                 const $button = $(e.currentTarget);
                 const $modal = $button.closest('.batch-sync-modal');
-                this.startSync($modal);
+                this.startSync($modal, false);
+            });
+
+            $(document).on('click', '.batch-sync-dry-run', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                const $modal = $button.closest('.batch-sync-modal');
+                this.startSync($modal, true);
+            });
+
+            $(document).on('click', '.batch-sync-copy-log', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                const $modal = $button.closest('.batch-sync-modal');
+                this.copyLog($modal);
+            });
+
+            $(document).on('click', '.batch-sync-run-again', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                const $modal = $button.closest('.batch-sync-modal');
+                this.runAgain($modal);
             });
         },
 
@@ -260,21 +281,62 @@
             $modal.find('.batch-sync-progress-fill').css('width', '0%');
             $modal.find('.batch-sync-status').empty();
             $modal.find('.batch-sync-log-entries').empty();
-            $modal.find('.batch-sync-log').removeClass('has-entries'); // Hide log
+            $modal.find('.batch-sync-log').removeClass('has-entries');
             $modal.find('.batch-sync-start').prop('disabled', false);
             $modal.find('.batch-sync-start .dashicons').removeClass('batch-sync-spin');
+            $modal.find('.batch-sync-dry-run').prop('disabled', false).show();
+            $modal.find('.batch-sync-copy-log').hide();
+            $modal.find('.batch-sync-run-again').hide();
+            $modal.find('.batch-sync-dry-run-banner').remove();
+        },
+
+        /**
+         * Copy log to clipboard
+         */
+        copyLog($modal) {
+            const $entries = $modal.find('.batch-sync-log-entry');
+            const config = window.batchSyncConfig || {};
+            const strings = config.strings || {};
+
+            let logText = '';
+            $entries.each(function () {
+                const time = $(this).find('.batch-sync-log-time').text();
+                const message = $(this).find('.batch-sync-log-message').text();
+                logText += `${time} ${message}\n`;
+            });
+
+            if (logText) {
+                navigator.clipboard.writeText(logText).then(() => {
+                    // Show temporary success message
+                    const $button = $modal.find('.batch-sync-copy-log');
+                    const originalText = $button.html();
+                    $button.html('<span class="dashicons dashicons-yes"></span> ' + strings.logCopied);
+                    setTimeout(() => {
+                        $button.html(originalText);
+                    }, 2000);
+                });
+            }
+        },
+
+        /**
+         * Run sync again
+         */
+        runAgain($modal) {
+            this.resetModal($modal);
+            this.startSync($modal, false);
         },
 
         /**
          * Start sync
          */
-        async startSync($modal) {
+        async startSync($modal, dryRun = false) {
             const syncConfig = $modal.data('sync-config');
             const config = window.batchSyncConfig || {};
             const handlerConfig = config.handlers?.[syncConfig.syncId] || {};
             const strings = config.strings || {};
 
             const $startButton = $modal.find('.batch-sync-start');
+            const $dryRunButton = $modal.find('.batch-sync-dry-run');
             const $percentage = $modal.find('.batch-sync-percentage');
             const $current = $modal.find('.batch-sync-current');
             const $total = $modal.find('.batch-sync-total');
@@ -282,8 +344,20 @@
             const $status = $modal.find('.batch-sync-status');
             const $log = $modal.find('.batch-sync-log-entries');
 
-            // Disable start button and change icon
+            // Show dry run banner if in dry run mode
+            if (dryRun) {
+                const $banner = $(`
+                    <div class="batch-sync-dry-run-banner">
+                        <span class="dashicons dashicons-visibility"></span>
+                        <strong>${strings.dryRunMode}</strong>
+                    </div>
+                `);
+                $modal.find('.batch-sync-modal-body').prepend($banner);
+            }
+
+            // Disable buttons and change icon
             $startButton.prop('disabled', true);
+            $dryRunButton.prop('disabled', true).hide();
             $startButton.find('.dashicons')
                 .removeClass('dashicons-' + handlerConfig.icon)
                 .addClass('dashicons-update-alt batch-sync-spin');
@@ -297,6 +371,7 @@
                 limit: handlerConfig.limit || 10,
                 singular: handlerConfig.singular || 'item',
                 plural: handlerConfig.plural || 'items',
+                options: {dry_run: dryRun}, // Pass dry run flag
 
                 onProgress(stats) {
                     // Update progress
@@ -362,8 +437,12 @@
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + handlerConfig.icon);
 
-                    // Auto-close modal and show notice if configured
-                    if (handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
+                    // Show Copy Log and Run Again buttons after completion
+                    $modal.find('.batch-sync-copy-log').show();
+                    $modal.find('.batch-sync-run-again').show();
+
+                    // Auto-close modal and show notice if configured (but not in dry run mode)
+                    if (!dryRun && handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
                         // Show notice
                         if (handlerConfig.noticeTarget) {
                             showNotice(handlerConfig.noticeTarget, message, noticeType);
@@ -372,6 +451,11 @@
                         // Close modal after short delay
                         setTimeout(() => {
                             ModalManager.closeModal($modal);
+
+                            // Refresh page after another short delay to show the notice first
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
                         }, 1000);
                     }
                 },
@@ -387,6 +471,10 @@
                     $startButton.find('.dashicons')
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + handlerConfig.icon);
+
+                    // Show Copy Log and Run Again buttons on error
+                    $modal.find('.batch-sync-copy-log').show();
+                    $modal.find('.batch-sync-run-again').show();
                 }
             });
 
@@ -459,7 +547,7 @@
         }
 
         // Make dismissible work
-        $notice.on('click', '.notice-dismiss', function() {
+        $notice.on('click', '.notice-dismiss', function () {
             $notice.fadeOut(() => $notice.remove());
         });
 
