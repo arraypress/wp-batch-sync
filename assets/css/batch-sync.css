@@ -314,7 +314,7 @@
 /* Hide these buttons by default - JavaScript will show them after sync completes */
 .batch-sync-copy-log,
 .batch-sync-run-again {
-    display: none;
+    display: none !important;
 }
 
 /* Spinning animation */

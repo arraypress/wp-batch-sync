@@ -286,8 +286,8 @@
             $modal.find('.batch-sync-start').prop('disabled', false).show();
             $modal.find('.batch-sync-start .dashicons').removeClass('batch-sync-spin');
             $modal.find('.batch-sync-dry-run').prop('disabled', false).show();
-            $modal.find('.batch-sync-copy-log').hide();
-            $modal.find('.batch-sync-run-again').hide();
+            $modal.find('.batch-sync-copy-log').css('display', 'none');
+            $modal.find('.batch-sync-run-again').css('display', 'none');
             $modal.find('.batch-sync-dry-run-banner').remove();
         },
 
@@ -477,9 +477,9 @@
                     // Hide dry run button as well
                     $dryRunButton.hide();
 
-                    // Show Copy Log and Run Again buttons after completion
-                    $modal.find('.batch-sync-copy-log').show();
-                    $modal.find('.batch-sync-run-again').show();
+                    // Show Copy Log and Run Again buttons after completion (use css to override !important)
+                    $modal.find('.batch-sync-copy-log').css('display', 'inline-flex');
+                    $modal.find('.batch-sync-run-again').css('display', 'inline-flex');
 
                     // Auto-close modal and show notice if configured (but not in dry run mode)
                     if (!dryRun && handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
@@ -515,9 +515,9 @@
                     // Hide dry run button as well
                     $dryRunButton.hide();
 
-                    // Show Copy Log and Run Again buttons on error
-                    $modal.find('.batch-sync-copy-log').show();
-                    $modal.find('.batch-sync-run-again').show();
+                    // Show Copy Log and Run Again buttons on error (use css to override !important)
+                    $modal.find('.batch-sync-copy-log').css('display', 'inline-flex');
+                    $modal.find('.batch-sync-run-again').css('display', 'inline-flex');
                 }
             });
 
