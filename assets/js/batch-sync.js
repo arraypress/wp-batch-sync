@@ -348,7 +348,7 @@
 
             // Time tracking
             let startTime = Date.now();
-            let lastUpdateTime = Date.now();
+            let batchCount = 0;
 
             // Show dry run banner if in dry run mode
             if (dryRun) {
@@ -367,6 +367,32 @@
             $startButton.find('.dashicons')
                 .removeClass('dashicons-' + handlerConfig.icon)
                 .addClass('dashicons-update-alt batch-sync-spin');
+
+            // Helper function to update time remaining
+            const updateTimeRemaining = (currentTotal, estimatedTotal) => {
+                if (currentTotal > 0 && estimatedTotal > 0 && currentTotal < estimatedTotal) {
+                    const elapsed = (Date.now() - startTime) / 1000; // seconds
+                    const rate = currentTotal / elapsed; // items per second
+                    const remaining = estimatedTotal - currentTotal;
+                    const estimatedSeconds = remaining / rate;
+
+                    if (estimatedSeconds > 0 && estimatedSeconds < 3600) { // Less than 1 hour
+                        const minutes = Math.floor(estimatedSeconds / 60);
+                        const seconds = Math.floor(estimatedSeconds % 60);
+                        if (minutes > 0) {
+                            $timeRemaining.text(`~${minutes}m ${seconds}s`);
+                        } else {
+                            $timeRemaining.text(`~${seconds}s`);
+                        }
+                    } else if (estimatedSeconds >= 3600) {
+                        $timeRemaining.text('~' + Math.floor(estimatedSeconds / 3600) + 'h');
+                    } else {
+                        $timeRemaining.text('--');
+                    }
+                } else {
+                    $timeRemaining.text('--');
+                }
+            };
 
             // Create sync client
             const client = new BatchSyncClient({
@@ -390,27 +416,9 @@
                     $current.text(stats.total);
                     $total.text(stats.estimatedTotal);
 
-                    // Calculate estimated time remaining
-                    if (stats.total > 0 && stats.estimatedTotal > 0) {
-                        const elapsed = (Date.now() - startTime) / 1000; // seconds
-                        const rate = stats.total / elapsed; // items per second
-                        const remaining = stats.estimatedTotal - stats.total;
-                        const estimatedSeconds = remaining / rate;
-
-                        if (estimatedSeconds > 0 && estimatedSeconds < 3600) { // Less than 1 hour
-                            const minutes = Math.floor(estimatedSeconds / 60);
-                            const seconds = Math.floor(estimatedSeconds % 60);
-                            if (minutes > 0) {
-                                $timeRemaining.text(`~${minutes}m ${seconds}s`);
-                            } else {
-                                $timeRemaining.text(`~${seconds}s`);
-                            }
-                        } else if (estimatedSeconds >= 3600) {
-                            $timeRemaining.text('~' + Math.floor(estimatedSeconds / 3600) + 'h');
-                        } else {
-                            $timeRemaining.text('--');
-                        }
-                    }
+                    // Update estimated time remaining
+                    updateTimeRemaining(stats.total, stats.estimatedTotal);
+                    batchCount = stats.batchNum || 0;
                 },
 
                 async onBatchComplete(items) {
