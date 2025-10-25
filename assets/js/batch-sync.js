@@ -260,7 +260,9 @@
             $modal.find('.batch-sync-progress-fill').css('width', '0%');
             $modal.find('.batch-sync-status').empty();
             $modal.find('.batch-sync-log-entries').empty();
+            $modal.find('.batch-sync-log').removeClass('has-entries'); // Hide log
             $modal.find('.batch-sync-start').prop('disabled', false);
+            $modal.find('.batch-sync-start .dashicons').removeClass('batch-sync-spin');
         },
 
         /**
@@ -280,9 +282,11 @@
             const $status = $modal.find('.batch-sync-status');
             const $log = $modal.find('.batch-sync-log-entries');
 
-            // Disable start button
+            // Disable start button and change icon
             $startButton.prop('disabled', true);
-            $startButton.find('.dashicons').addClass('batch-sync-spin');
+            $startButton.find('.dashicons')
+                .removeClass('dashicons-' + handlerConfig.icon)
+                .addClass('dashicons-update-alt batch-sync-spin');
 
             // Create sync client
             const client = new BatchSyncClient({
@@ -334,32 +338,55 @@
                     // Status message
                     const itemName = stats.processed === 1 ? handlerConfig.singular : handlerConfig.plural;
                     let message;
+                    let noticeType = 'success';
 
                     if (stats.aborted) {
                         message = strings.error + ' Sync cancelled.';
+                        noticeType = 'error';
                         $status.html(`<span class="batch-sync-error">${message}</span>`);
                     } else if (stats.failed === 0) {
                         message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}.`;
                         $status.html(`<span class="batch-sync-success">${message}</span>`);
                     } else {
                         message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}, ${stats.failed} ${strings.failed}.`;
+                        noticeType = 'warning';
                         $status.html(`<span class="batch-sync-warning">${message}</span>`);
                     }
 
                     // Add final log entry
                     addLogEntry($log, message, stats.failed > 0 ? 'warning' : 'success');
 
-                    // Re-enable button
+                    // Re-enable button and restore icon
                     $startButton.prop('disabled', false);
-                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                    $startButton.find('.dashicons')
+                        .removeClass('dashicons-update-alt batch-sync-spin')
+                        .addClass('dashicons-' + handlerConfig.icon);
+
+                    // Auto-close modal and show notice if configured
+                    if (handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
+                        // Show notice
+                        if (handlerConfig.noticeTarget) {
+                            showNotice(handlerConfig.noticeTarget, message, noticeType);
+                        }
+
+                        // Close modal after short delay
+                        setTimeout(() => {
+                            ModalManager.closeModal($modal);
+                        }, 1000);
+                    }
                 },
 
                 onError(error) {
                     $status.html(`<span class="batch-sync-error">${strings.error} ${error.message}</span>`);
                     addLogEntry($log, error.message, 'error');
 
+                    // Keep log visible on error
+                    $log.addClass('has-entries');
+
                     $startButton.prop('disabled', false);
-                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                    $startButton.find('.dashicons')
+                        .removeClass('dashicons-update-alt batch-sync-spin')
+                        .addClass('dashicons-' + handlerConfig.icon);
                 }
             });
 
@@ -399,11 +426,47 @@
         $log.append($entry);
         $log.scrollTop($log[0].scrollHeight);
 
+        // Show log container when first entry is added
+        $log.closest('.batch-sync-log').addClass('has-entries');
+
         // Limit entries
         const entries = $log.find('.batch-sync-log-entry');
         if (entries.length > 100) {
             entries.slice(0, entries.length - 100).remove();
         }
+    }
+
+    /**
+     * Show WordPress admin notice
+     */
+    function showNotice(target, message, type = 'success') {
+        const noticeClass = type === 'error' ? 'notice-error' :
+            type === 'warning' ? 'notice-warning' :
+                'notice-success';
+
+        const $notice = $(`
+            <div class="notice ${noticeClass} is-dismissible">
+                <p>${message}</p>
+            </div>
+        `);
+
+        // Insert notice
+        const $target = $(target);
+        if ($target.length) {
+            $target.after($notice);
+        } else {
+            $('.wrap h1').first().after($notice);
+        }
+
+        // Make dismissible work
+        $notice.on('click', '.notice-dismiss', function() {
+            $notice.fadeOut(() => $notice.remove());
+        });
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            $notice.fadeOut(() => $notice.remove());
+        }, 5000);
     }
 
     // Initialize on ready

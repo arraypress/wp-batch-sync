@@ -78,16 +78,18 @@ class Manager {
      * @param array  $args {
      *     Sync handler configuration
      *
-     * @type callable $callback   Function to call for syncing (receives: $starting_after, $limit, $options)
-     * @type string   $title      Modal title
-     * @type string   $description Optional description shown in modal
-     * @type string   $button_text Button text (default: "Sync Now")
-     * @type string   $singular   Singular item name (e.g., "price")
-     * @type string   $plural     Plural item name (e.g., "prices")
-     * @type int      $limit      Items per batch (default: 10)
-     * @type string   $capability Required capability (default: 'manage_options')
-     * @type string   $icon       Dashicon name (default: 'update')
-     * @type array    $options    Default options passed to callback
+     * @type callable $callback      Function to call for syncing (receives: $starting_after, $limit, $options)
+     * @type string   $title         Modal title
+     * @type string   $description   Optional description shown in modal
+     * @type string   $button_text   Button text (default: "Sync Now")
+     * @type string   $singular      Singular item name (e.g., "price")
+     * @type string   $plural        Plural item name (e.g., "prices")
+     * @type int      $limit         Items per batch (default: 10)
+     * @type string   $capability    Required capability (default: 'manage_options')
+     * @type string   $icon          Dashicon name (default: 'update')
+     * @type array    $options       Default options passed to callback
+     * @type bool     $auto_close    Auto-close modal on completion (default: false)
+     * @type string   $notice_target CSS selector for notice placement (e.g., '.wrap h1')
      * }
      *
      * @return void
@@ -95,16 +97,18 @@ class Manager {
      */
     public function register( string $id, array $args ): void {
         $this->handlers[ $id ] = wp_parse_args( $args, [
-                'callback'     => '',
-                'title'        => __( 'Sync Data', 'arraypress' ),
-                'description'  => '',
-                'button_text'  => __( 'Sync Now', 'arraypress' ),
-                'singular'     => 'item',
-                'plural'       => 'items',
-                'limit'        => 10,
-                'capability'   => 'manage_options',
-                'icon'         => 'update',
-                'options'      => [],
+                'callback'      => '',
+                'title'         => __( 'Sync Data', 'arraypress' ),
+                'description'   => '',
+                'button_text'   => __( 'Sync Now', 'arraypress' ),
+                'singular'      => 'item',
+                'plural'        => 'items',
+                'limit'         => 10,
+                'capability'    => 'manage_options',
+                'icon'          => 'update',
+                'options'       => [],
+                'auto_close'    => false,
+                'notice_target' => '',
         ] );
     }
 
@@ -197,8 +201,7 @@ class Manager {
                 $base_file,
                 'js/batch-sync.js',
                 [ 'jquery' ],
-                $version,
-                true
+                $version
         );
         wp_enqueue_script( $handle );
 
@@ -238,11 +241,13 @@ class Manager {
 
         foreach ( $this->handlers as $id => $handler ) {
             $configs[ $id ] = [
-                    'title'       => $handler['title'],
-                    'description' => $handler['description'],
-                    'singular'    => $handler['singular'],
-                    'plural'      => $handler['plural'],
-                    'limit'       => $handler['limit'],
+                    'title'        => $handler['title'],
+                    'description'  => $handler['description'],
+                    'singular'     => $handler['singular'],
+                    'plural'       => $handler['plural'],
+                    'limit'        => $handler['limit'],
+                    'autoClose'    => $handler['auto_close'],
+                    'noticeTarget' => $handler['notice_target'],
             ];
         }
 

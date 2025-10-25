@@ -12,6 +12,7 @@
 .batch-sync-trigger {
     display: inline-flex;
     align-items: center;
+    align-content: center;
     gap: 6px;
 }
 
@@ -180,6 +181,11 @@
 /* Log */
 .batch-sync-log {
     margin-top: 20px;
+    display: none; /* Hidden by default */
+}
+
+.batch-sync-log.has-entries {
+    display: block; /* Show when entries exist */
 }
 
 .batch-sync-log h3 {
@@ -272,12 +278,8 @@
 }
 
 @keyframes batch-sync-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* ==========================================================================
