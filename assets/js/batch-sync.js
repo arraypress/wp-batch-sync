@@ -300,7 +300,7 @@
             const strings = config.strings || {};
 
             let logText = '';
-            $entries.each(function() {
+            $entries.each(function () {
                 const time = $(this).find('.batch-sync-log-time').text();
                 const message = $(this).find('.batch-sync-log-message').text();
                 logText += `${time} ${message}\n`;
@@ -403,7 +403,7 @@
                 limit: handlerConfig.limit || 10,
                 singular: handlerConfig.singular || 'item',
                 plural: handlerConfig.plural || 'items',
-                options: { dry_run: dryRun }, // Pass dry run flag
+                options: {dry_run: dryRun}, // Pass dry run flag
 
                 onProgress(stats) {
                     // Update progress
@@ -590,7 +590,7 @@
         }
 
         // Make dismissible work
-        $notice.on('click', '.notice-dismiss', function() {
+        $notice.on('click', '.notice-dismiss', function () {
             $notice.fadeOut(() => $notice.remove());
         });
 
