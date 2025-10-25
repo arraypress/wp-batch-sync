@@ -51,7 +51,7 @@
                     hasMore = response.has_more;
                     startingAfter = response.last_id || '';
 
-                    // Get estimated total from first batch
+                    // Set estimated total from first response
                     if (batchNum === 1 && response.estimated_total) {
                         estimatedTotal = response.estimated_total;
                     }
@@ -61,7 +61,7 @@
                             processed: totalProcessed,
                             failed: totalFailed,
                             total: totalProcessed,
-                            estimatedTotal: estimatedTotal || totalProcessed,
+                            estimatedTotal: estimatedTotal,
                             hasMore: hasMore,
                             batchNum: batchNum
                         });
@@ -242,11 +242,7 @@
                     $progress.css('width', percent + '%');
                     $percentage.text(percent + '%');
                     $current.text(stats.total);
-
-                    // Only set total once from estimated
-                    if (stats.estimatedTotal && $total.text() === '0') {
-                        $total.text(stats.estimatedTotal);
-                    }
+                    $total.text(stats.estimatedTotal);
                 },
 
                 async onBatchComplete(items) {
@@ -367,7 +363,7 @@
             $('.wrap h1').first().after($notice);
         }
 
-        $notice.on('click', '.notice-dismiss', function () {
+        $notice.on('click', '.notice-dismiss', function() {
             $notice.fadeOut(() => $notice.remove());
         });
 
