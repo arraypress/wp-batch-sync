@@ -195,7 +195,7 @@ class Manager {
         wp_register_composer_script(
                 $handle,
                 $base_file,
-                'assets/js/batch-sync.js',
+                'js/batch-sync.js',
                 [ 'jquery' ],
                 $version,
                 true
@@ -206,7 +206,7 @@ class Manager {
         wp_register_composer_style(
                 $handle,
                 $base_file,
-                'assets/css/batch-sync.css',
+                'css/batch-sync.css',
                 [],
                 $version
         );
