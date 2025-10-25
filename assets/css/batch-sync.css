@@ -311,18 +311,20 @@
     margin: 0;
 }
 
+/* Hide these buttons by default - JavaScript will show them after sync completes */
+.batch-sync-copy-log,
+.batch-sync-run-again {
+    display: none;
+}
+
 /* Spinning animation */
 .batch-sync-spin {
     animation: batch-sync-spin 1s linear infinite;
 }
 
 @keyframes batch-sync-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* ==========================================================================

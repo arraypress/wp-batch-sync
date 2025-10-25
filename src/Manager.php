@@ -358,13 +358,11 @@ class Manager {
                                 <?php _e( 'Dry Run', 'arraypress' ); ?>
                             </button>
                         <?php endif; ?>
-                        <button type="button" class="button batch-sync-copy-log batch-sync-button"
-                                style="display: none;">
+                        <button type="button" class="button batch-sync-copy-log batch-sync-button">
                             <span class="dashicons dashicons-clipboard"></span>
                             <?php _e( 'Copy Log', 'arraypress' ); ?>
                         </button>
-                        <button type="button" class="button batch-sync-run-again batch-sync-button"
-                                style="display: none;">
+                        <button type="button" class="button batch-sync-run-again batch-sync-button">
                             <span class="dashicons dashicons-update"></span>
                             <?php _e( 'Run Again', 'arraypress' ); ?>
                         </button>
