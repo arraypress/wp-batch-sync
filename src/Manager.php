@@ -329,6 +329,10 @@ class Manager {
 									<span class="batch-sync-total">0</span>
 								</span>
                             </div>
+                            <div class="batch-sync-stat">
+                                <span class="batch-sync-stat-label"><?php _e( 'Time Remaining', 'arraypress' ); ?></span>
+                                <span class="batch-sync-stat-value estimated-time batch-sync-time-remaining">--</span>
+                            </div>
                         </div>
 
                         <div class="batch-sync-progress-bar">
@@ -344,25 +348,25 @@ class Manager {
                     </div>
 
                     <div class="batch-sync-modal-footer">
-                        <button type="button" class="button button-primary batch-sync-start">
+                        <button type="button" class="button button-primary batch-sync-start batch-sync-button">
                             <span class="dashicons dashicons-<?php echo esc_attr( $handler['icon'] ); ?>"></span>
                             <?php echo esc_html( $handler['button_text'] ); ?>
                         </button>
                         <?php if ( $handler['dry_run_support'] ): ?>
-                            <button type="button" class="button batch-sync-dry-run">
+                            <button type="button" class="button batch-sync-dry-run batch-sync-button">
                                 <span class="dashicons dashicons-visibility"></span>
                                 <?php _e( 'Dry Run', 'arraypress' ); ?>
                             </button>
                         <?php endif; ?>
-                        <button type="button" class="button batch-sync-copy-log" style="display: none;">
+                        <button type="button" class="button batch-sync-copy-log batch-sync-button" style="display: none;">
                             <span class="dashicons dashicons-clipboard"></span>
                             <?php _e( 'Copy Log', 'arraypress' ); ?>
                         </button>
-                        <button type="button" class="button batch-sync-run-again" style="display: none;">
+                        <button type="button" class="button batch-sync-run-again batch-sync-button" style="display: none;">
                             <span class="dashicons dashicons-update"></span>
                             <?php _e( 'Run Again', 'arraypress' ); ?>
                         </button>
-                        <button type="button" class="button batch-sync-modal-close">
+                        <button type="button" class="button batch-sync-modal-close batch-sync-button">
                             <?php _e( 'Close', 'arraypress' ); ?>
                         </button>
                     </div>

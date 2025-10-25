@@ -278,11 +278,12 @@
             $modal.find('.batch-sync-percentage').text('0%');
             $modal.find('.batch-sync-current').text('0');
             $modal.find('.batch-sync-total').text('0');
+            $modal.find('.batch-sync-time-remaining').text('--');
             $modal.find('.batch-sync-progress-fill').css('width', '0%');
             $modal.find('.batch-sync-status').empty();
             $modal.find('.batch-sync-log-entries').empty();
             $modal.find('.batch-sync-log').removeClass('has-entries');
-            $modal.find('.batch-sync-start').prop('disabled', false);
+            $modal.find('.batch-sync-start').prop('disabled', false).show();
             $modal.find('.batch-sync-start .dashicons').removeClass('batch-sync-spin');
             $modal.find('.batch-sync-dry-run').prop('disabled', false).show();
             $modal.find('.batch-sync-copy-log').hide();
@@ -299,7 +300,7 @@
             const strings = config.strings || {};
 
             let logText = '';
-            $entries.each(function () {
+            $entries.each(function() {
                 const time = $(this).find('.batch-sync-log-time').text();
                 const message = $(this).find('.batch-sync-log-message').text();
                 logText += `${time} ${message}\n`;
@@ -340,9 +341,14 @@
             const $percentage = $modal.find('.batch-sync-percentage');
             const $current = $modal.find('.batch-sync-current');
             const $total = $modal.find('.batch-sync-total');
+            const $timeRemaining = $modal.find('.batch-sync-time-remaining');
             const $progress = $modal.find('.batch-sync-progress-fill');
             const $status = $modal.find('.batch-sync-status');
             const $log = $modal.find('.batch-sync-log-entries');
+
+            // Time tracking
+            let startTime = Date.now();
+            let lastUpdateTime = Date.now();
 
             // Show dry run banner if in dry run mode
             if (dryRun) {
@@ -371,7 +377,7 @@
                 limit: handlerConfig.limit || 10,
                 singular: handlerConfig.singular || 'item',
                 plural: handlerConfig.plural || 'items',
-                options: {dry_run: dryRun}, // Pass dry run flag
+                options: { dry_run: dryRun }, // Pass dry run flag
 
                 onProgress(stats) {
                     // Update progress
@@ -383,6 +389,28 @@
                     $percentage.text(percent + '%');
                     $current.text(stats.total);
                     $total.text(stats.estimatedTotal);
+
+                    // Calculate estimated time remaining
+                    if (stats.total > 0 && stats.estimatedTotal > 0) {
+                        const elapsed = (Date.now() - startTime) / 1000; // seconds
+                        const rate = stats.total / elapsed; // items per second
+                        const remaining = stats.estimatedTotal - stats.total;
+                        const estimatedSeconds = remaining / rate;
+
+                        if (estimatedSeconds > 0 && estimatedSeconds < 3600) { // Less than 1 hour
+                            const minutes = Math.floor(estimatedSeconds / 60);
+                            const seconds = Math.floor(estimatedSeconds % 60);
+                            if (minutes > 0) {
+                                $timeRemaining.text(`~${minutes}m ${seconds}s`);
+                            } else {
+                                $timeRemaining.text(`~${seconds}s`);
+                            }
+                        } else if (estimatedSeconds >= 3600) {
+                            $timeRemaining.text('~' + Math.floor(estimatedSeconds / 3600) + 'h');
+                        } else {
+                            $timeRemaining.text('--');
+                        }
+                    }
                 },
 
                 async onBatchComplete(items) {
@@ -409,6 +437,7 @@
                     $percentage.text('100%');
                     $current.text(stats.total);
                     $total.text(stats.total);
+                    $timeRemaining.text('Complete');
 
                     // Status message
                     const itemName = stats.processed === 1 ? handlerConfig.singular : handlerConfig.plural;
@@ -431,11 +460,14 @@
                     // Add final log entry
                     addLogEntry($log, message, stats.failed > 0 ? 'warning' : 'success');
 
-                    // Re-enable button and restore icon
-                    $startButton.prop('disabled', false);
+                    // Re-enable start button and restore icon, but hide it
+                    $startButton.prop('disabled', false).hide();
                     $startButton.find('.dashicons')
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + handlerConfig.icon);
+
+                    // Hide dry run button as well
+                    $dryRunButton.hide();
 
                     // Show Copy Log and Run Again buttons after completion
                     $modal.find('.batch-sync-copy-log').show();
@@ -467,10 +499,13 @@
                     // Keep log visible on error
                     $log.addClass('has-entries');
 
-                    $startButton.prop('disabled', false);
+                    $startButton.prop('disabled', false).hide();
                     $startButton.find('.dashicons')
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + handlerConfig.icon);
+
+                    // Hide dry run button as well
+                    $dryRunButton.hide();
 
                     // Show Copy Log and Run Again buttons on error
                     $modal.find('.batch-sync-copy-log').show();
@@ -547,7 +582,7 @@
         }
 
         // Make dismissible work
-        $notice.on('click', '.notice-dismiss', function () {
+        $notice.on('click', '.notice-dismiss', function() {
             $notice.fadeOut(() => $notice.remove());
         });
 
