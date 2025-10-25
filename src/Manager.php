@@ -74,43 +74,41 @@ class Manager {
     /**
      * Register a sync handler
      *
-     * @param string  $id              Unique identifier for this sync operation
-     * @param array   $args            {
-     *                                 Sync handler configuration
+     * @param string  $id            Unique identifier for this sync operation
+     * @param array   $args          {
+     *                               Sync handler configuration
      *
-     * @type callable $callback        Function to call for syncing (receives: $starting_after, $limit, $options)
-     * @type string   $title           Modal title
-     * @type string   $description     Optional description shown in modal
-     * @type string   $button_text     Button text (default: "Sync Now")
-     * @type string   $singular        Singular item name (e.g., "price")
-     * @type string   $plural          Plural item name (e.g., "prices")
-     * @type int      $limit           Items per batch - how many items to process at once (default: 10)
-     * @type string   $capability      Required capability (default: 'manage_options')
-     * @type string   $icon            Dashicon name (default: 'update')
-     * @type array    $options         Default options passed to callback
-     * @type bool     $auto_close      Auto-close modal on completion (default: false)
-     * @type string   $notice_target   CSS selector for notice placement (default: '.wrap h1')
-     * @type bool     $dry_run_support Whether callback supports dry run mode (default: false)
-     *                                 }
+     * @type callable $callback      Function to call for syncing (receives: $starting_after, $limit, $options)
+     * @type string   $title         Modal title
+     * @type string   $description   Optional description shown in modal
+     * @type string   $button_text   Button text (default: "Sync Now")
+     * @type string   $singular      Singular item name (e.g., "price")
+     * @type string   $plural        Plural item name (e.g., "prices")
+     * @type int      $limit         Items per batch - how many items to process at once (default: 10)
+     * @type string   $capability    Required capability (default: 'manage_options')
+     * @type string   $icon          Dashicon name (default: 'update')
+     * @type array    $options       Default options passed to callback
+     * @type bool     $auto_close    Auto-close modal on completion (default: false)
+     * @type string   $notice_target CSS selector for notice placement (default: '.wrap h1')
+     *                               }
      *
      * @return void
      * @since 1.0.0
      */
     public function register( string $id, array $args ): void {
         $this->handlers[ $id ] = wp_parse_args( $args, [
-                'callback'        => '',
-                'title'           => __( 'Sync Data', 'arraypress' ),
-                'description'     => '',
-                'button_text'     => __( 'Sync Now', 'arraypress' ),
-                'singular'        => 'item',
-                'plural'          => 'items',
-                'limit'           => 10,
-                'capability'      => 'manage_options',
-                'icon'            => 'update',
-                'options'         => [],
-                'auto_close'      => false,
-                'notice_target'   => '.wrap h1',
-                'dry_run_support' => false,
+                'callback'      => '',
+                'title'         => __( 'Sync Data', 'arraypress' ),
+                'description'   => '',
+                'button_text'   => __( 'Sync Now', 'arraypress' ),
+                'singular'      => 'item',
+                'plural'        => 'items',
+                'limit'         => 10,
+                'capability'    => 'manage_options',
+                'icon'          => 'update',
+                'options'       => [],
+                'auto_close'    => false,
+                'notice_target' => '.wrap h1',
         ] );
     }
 
@@ -203,7 +201,8 @@ class Manager {
                 $base_file,
                 'js/batch-sync.js',
                 [ 'jquery' ],
-                $version
+                $version,
+                true
         );
         wp_enqueue_script( $handle );
 
@@ -239,18 +238,21 @@ class Manager {
      * @since 1.0.0
      */
     private function get_handler_configs(): array {
-        return array_map( function ( $handler ) {
-            return [
-                    'title'         => $handler['title'],
-                    'description'   => $handler['description'],
-                    'singular'      => $handler['singular'],
-                    'plural'        => $handler['plural'],
-                    'limit'         => $handler['limit'],
-                    'autoClose'     => $handler['auto_close'],
-                    'noticeTarget'  => $handler['notice_target'],
-                    'dryRunSupport' => $handler['dry_run_support'],
+        $configs = [];
+
+        foreach ( $this->handlers as $id => $handler ) {
+            $configs[ $id ] = [
+                    'title'        => $handler['title'],
+                    'description'  => $handler['description'],
+                    'singular'     => $handler['singular'],
+                    'plural'       => $handler['plural'],
+                    'limit'        => $handler['limit'],
+                    'autoClose'    => $handler['auto_close'],
+                    'noticeTarget' => $handler['notice_target'],
             ];
-        }, $this->handlers );
+        }
+
+        return $configs;
     }
 
     /**
@@ -276,11 +278,6 @@ class Manager {
                 'status'        => __( 'Status', 'arraypress' ),
                 'activityLog'   => __( 'Activity Log', 'arraypress' ),
                 'noItems'       => __( 'No items to sync', 'arraypress' ),
-                'copyLog'       => __( 'Copy Log', 'arraypress' ),
-                'logCopied'     => __( 'Log copied to clipboard!', 'arraypress' ),
-                'runAgain'      => __( 'Run Again', 'arraypress' ),
-                'dryRunMode'    => __( 'DRY RUN MODE - No changes will be made', 'arraypress' ),
-                'dryRun'        => __( 'Dry Run', 'arraypress' ),
         ];
     }
 
@@ -307,8 +304,9 @@ class Manager {
                 <div class="batch-sync-modal-content">
                     <div class="batch-sync-modal-header">
                         <h2><?php echo esc_html( $handler['title'] ); ?></h2>
-                        <button type="button" class="batch-sync-modal-close">
-                            <span class="dashicons dashicons-no"></span>
+                        <button type="button" class="batch-sync-modal-close-x"
+                                aria-label="<?php esc_attr_e( 'Close', 'arraypress' ); ?>">
+                            <span class="dashicons dashicons-no-alt"></span>
                         </button>
                     </div>
 
@@ -329,10 +327,6 @@ class Manager {
 									<span class="batch-sync-total">0</span>
 								</span>
                             </div>
-                            <div class="batch-sync-stat">
-                                <span class="batch-sync-stat-label"><?php _e( 'Time Remaining', 'arraypress' ); ?></span>
-                                <span class="batch-sync-stat-value estimated-time batch-sync-time-remaining">--</span>
-                            </div>
                         </div>
 
                         <div class="batch-sync-progress-bar">
@@ -348,25 +342,11 @@ class Manager {
                     </div>
 
                     <div class="batch-sync-modal-footer">
-                        <button type="button" class="button button-primary batch-sync-start batch-sync-button">
+                        <button type="button" class="button button-primary batch-sync-start">
                             <span class="dashicons dashicons-<?php echo esc_attr( $handler['icon'] ); ?>"></span>
                             <?php echo esc_html( $handler['button_text'] ); ?>
                         </button>
-                        <?php if ( $handler['dry_run_support'] ): ?>
-                            <button type="button" class="button batch-sync-dry-run batch-sync-button">
-                                <span class="dashicons dashicons-visibility"></span>
-                                <?php _e( 'Dry Run', 'arraypress' ); ?>
-                            </button>
-                        <?php endif; ?>
-                        <button type="button" class="button batch-sync-copy-log batch-sync-button">
-                            <span class="dashicons dashicons-clipboard"></span>
-                            <?php _e( 'Copy Log', 'arraypress' ); ?>
-                        </button>
-                        <button type="button" class="button batch-sync-run-again batch-sync-button">
-                            <span class="dashicons dashicons-update"></span>
-                            <?php _e( 'Run Again', 'arraypress' ); ?>
-                        </button>
-                        <button type="button" class="button batch-sync-modal-close batch-sync-button">
+                        <button type="button" class="button batch-sync-modal-close">
                             <?php _e( 'Close', 'arraypress' ); ?>
                         </button>
                     </div>
