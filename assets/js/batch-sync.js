@@ -223,7 +223,10 @@
             const $log = $modal.find('.batch-sync-log-entries');
 
             $startButton.prop('disabled', true);
-            $startButton.find('.dashicons').addClass('batch-sync-spin');
+            const originalIcon = handlerConfig.icon || 'update';
+            $startButton.find('.dashicons')
+                .removeClass('dashicons-' + originalIcon)
+                .addClass('dashicons-update-alt batch-sync-spin');
 
             const client = new BatchSyncClient({
                 ajaxUrl: config.ajaxUrl,
@@ -281,7 +284,9 @@
                     addLogEntry($log, message, stats.failed > 0 ? 'warning' : 'success');
 
                     $startButton.prop('disabled', false);
-                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                    $startButton.find('.dashicons')
+                        .removeClass('dashicons-update-alt batch-sync-spin')
+                        .addClass('dashicons-' + originalIcon);
 
                     // Auto-close if configured
                     if (handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
@@ -304,7 +309,9 @@
                     $log.closest('.batch-sync-log').addClass('has-entries');
 
                     $startButton.prop('disabled', false);
-                    $startButton.find('.dashicons').removeClass('batch-sync-spin');
+                    $startButton.find('.dashicons')
+                        .removeClass('dashicons-update-alt batch-sync-spin')
+                        .addClass('dashicons-' + originalIcon);
                 }
             });
 
