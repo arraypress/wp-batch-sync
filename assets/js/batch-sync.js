@@ -60,7 +60,7 @@
                         this.config.onProgress({
                             processed: totalProcessed,
                             failed: totalFailed,
-                            total: totalProcessed,
+                            total: totalProcessed + totalFailed, // Total items attempted
                             estimatedTotal: estimatedTotal,
                             hasMore: hasMore,
                             batchNum: batchNum
@@ -252,7 +252,7 @@
                     for (let i = 0; i < items.length; i++) {
                         const item = items[i];
                         const itemName = item.name || item.id || 'Item';
-                        const hasError = item.error && item.error !== null;
+                        const hasError = item.error && true;
 
                         $status.text((hasError ? strings.error : strings.processing) + ' ' + itemName);
                         addLogEntry($log, itemName, hasError ? 'error' : 'success', item.error);
@@ -267,17 +267,17 @@
                     $current.text(stats.total);
                     $total.text(stats.total);
 
-                    const itemName = stats.processed === 1 ? handlerConfig.singular : handlerConfig.plural;
+                    const itemName = stats.total === 1 ? handlerConfig.singular : handlerConfig.plural;
                     let message;
 
                     if (stats.aborted) {
                         message = strings.error + ' Sync cancelled.';
                         $status.html(`<span class="batch-sync-error">${message}</span>`);
                     } else if (stats.failed === 0) {
-                        message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}.`;
+                        message = `${strings.complete} ${stats.total} ${itemName} synced.`;
                         $status.html(`<span class="batch-sync-success">${message}</span>`);
                     } else {
-                        message = `${strings.complete} ${stats.processed} ${itemName} ${strings.synced}, ${stats.failed} ${strings.failed}.`;
+                        message = `${strings.complete} ${stats.total} ${itemName} processed. ${stats.processed} succeeded, ${stats.failed} failed.`;
                         $status.html(`<span class="batch-sync-warning">${message}</span>`);
                     }
 
