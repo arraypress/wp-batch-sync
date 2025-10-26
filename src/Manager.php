@@ -327,6 +327,10 @@ class Manager {
 									<span class="batch-sync-total">0</span>
 								</span>
                             </div>
+                            <div class="batch-sync-stat">
+                                <span class="batch-sync-stat-label"><?php _e( 'Failed', 'arraypress' ); ?></span>
+                                <span class="batch-sync-stat-value batch-sync-failed">0</span>
+                            </div>
                         </div>
 
                         <div class="batch-sync-progress-bar">
