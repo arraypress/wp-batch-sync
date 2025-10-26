@@ -278,6 +278,8 @@ class Manager {
                 'status'        => __( 'Status', 'arraypress' ),
                 'activityLog'   => __( 'Activity Log', 'arraypress' ),
                 'noItems'       => __( 'No items to sync', 'arraypress' ),
+                'copyLog'       => __( 'Copy Log', 'arraypress' ),
+                'logCopied'     => __( 'Log copied to clipboard!', 'arraypress' ),
         ];
     }
 

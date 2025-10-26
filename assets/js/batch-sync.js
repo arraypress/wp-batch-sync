@@ -151,6 +151,13 @@
                 const $modal = $button.closest('.batch-sync-modal');
                 this.startSync($modal);
             });
+
+            $(document).on('click', '.batch-sync-copy-log', (e) => {
+                e.preventDefault();
+                const $button = $(e.currentTarget);
+                const $modal = $button.closest('.batch-sync-modal');
+                this.copyLog($modal);
+            });
         },
 
         openModal($button) {
@@ -207,6 +214,31 @@
             $modal.find('.batch-sync-log').removeClass('has-entries');
             $modal.find('.batch-sync-start').prop('disabled', false);
             $modal.find('.batch-sync-start .dashicons').removeClass('batch-sync-spin');
+            $modal.find('.batch-sync-copy-log').hide();
+        },
+
+        copyLog($modal) {
+            const $entries = $modal.find('.batch-sync-log-entry');
+            const config = window.batchSyncConfig || {};
+            const strings = config.strings || {};
+
+            let logText = '';
+            $entries.each(function () {
+                const time = $(this).find('.batch-sync-log-time').text();
+                const message = $(this).find('.batch-sync-log-message').text();
+                logText += `${time} ${message}\n`;
+            });
+
+            if (logText) {
+                navigator.clipboard.writeText(logText).then(() => {
+                    const $button = $modal.find('.batch-sync-copy-log');
+                    const originalHtml = $button.html();
+                    $button.html('<span class="dashicons dashicons-yes"></span> ' + (strings.logCopied || 'Copied!'));
+                    setTimeout(() => {
+                        $button.html(originalHtml);
+                    }, 2000);
+                });
+            }
         },
 
         async startSync($modal) {
@@ -302,6 +334,9 @@
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + originalIcon);
 
+                    // Show Copy Log button after completion
+                    $modal.find('.batch-sync-copy-log').show();
+
                     // Auto-close if configured
                     if (handlerConfig.autoClose && !stats.aborted && stats.failed === 0) {
                         if (handlerConfig.noticeTarget) {
@@ -326,6 +361,9 @@
                     $startButton.find('.dashicons')
                         .removeClass('dashicons-update-alt batch-sync-spin')
                         .addClass('dashicons-' + originalIcon);
+
+                    // Show Copy Log button on error
+                    $modal.find('.batch-sync-copy-log').show();
                 }
             });
 
