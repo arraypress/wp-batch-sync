@@ -82,7 +82,7 @@
             const finalStats = {
                 processed: totalProcessed,
                 failed: totalFailed,
-                total: totalProcessed,
+                total: totalProcessed + totalFailed, // Total = successful + failed
                 aborted: this.aborted
             };
 
@@ -363,7 +363,7 @@
             $('.wrap h1').first().after($notice);
         }
 
-        $notice.on('click', '.notice-dismiss', function() {
+        $notice.on('click', '.notice-dismiss', function () {
             $notice.fadeOut(() => $notice.remove());
         });
 
