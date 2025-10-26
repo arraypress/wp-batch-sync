@@ -352,6 +352,10 @@ class Manager {
                             <span class="dashicons dashicons-<?php echo esc_attr( $handler['icon'] ); ?>"></span>
                             <?php echo esc_html( $handler['button_text'] ); ?>
                         </button>
+                        <button type="button" class="button batch-sync-copy-log" style="display: none;">
+                            <span class="dashicons dashicons-clipboard"></span>
+                            <?php _e( 'Copy Log', 'arraypress' ); ?>
+                        </button>
                         <button type="button" class="button batch-sync-modal-close">
                             <?php _e( 'Close', 'arraypress' ); ?>
                         </button>
