@@ -200,6 +200,7 @@
             $modal.find('.batch-sync-percentage').text('0%');
             $modal.find('.batch-sync-current').text('0');
             $modal.find('.batch-sync-total').text('0');
+            $modal.find('.batch-sync-failed').text('0').css('color', '');
             $modal.find('.batch-sync-progress-fill').css('width', '0%');
             $modal.find('.batch-sync-status').empty();
             $modal.find('.batch-sync-log-entries').empty();
@@ -218,6 +219,7 @@
             const $percentage = $modal.find('.batch-sync-percentage');
             const $current = $modal.find('.batch-sync-current');
             const $total = $modal.find('.batch-sync-total');
+            const $failed = $modal.find('.batch-sync-failed');
             const $progress = $modal.find('.batch-sync-progress-fill');
             const $status = $modal.find('.batch-sync-status');
             const $log = $modal.find('.batch-sync-log-entries');
@@ -246,13 +248,19 @@
                     $percentage.text(percent + '%');
                     $current.text(stats.total);
                     $total.text(stats.estimatedTotal);
+                    $failed.text(stats.failed);
+
+                    // Change failed counter color if > 0
+                    if (stats.failed > 0) {
+                        $failed.css('color', '#d63638');
+                    }
                 },
 
                 async onBatchComplete(items) {
                     for (let i = 0; i < items.length; i++) {
                         const item = items[i];
                         const itemName = item.name || item.id || 'Item';
-                        const hasError = item.error && true;
+                        const hasError = item.error && item.error !== null;
 
                         $status.text((hasError ? strings.error : strings.processing) + ' ' + itemName);
                         addLogEntry($log, itemName, hasError ? 'error' : 'success', item.error);
@@ -266,6 +274,12 @@
                     $percentage.text('100%');
                     $current.text(stats.total);
                     $total.text(stats.total);
+                    $failed.text(stats.failed);
+
+                    // Highlight failed count if > 0
+                    if (stats.failed > 0) {
+                        $failed.css('color', '#d63638');
+                    }
 
                     const itemName = stats.total === 1 ? handlerConfig.singular : handlerConfig.plural;
                     let message;
