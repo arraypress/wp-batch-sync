@@ -457,4 +457,28 @@ class Manager {
         return $this->handlers;
     }
 
+    /**
+     * Check if a sync handler is registered
+     *
+     * @param string $id Handler identifier
+     *
+     * @return bool True if handler exists
+     * @since 2.0.0
+     */
+    public function has_handler( string $id ): bool {
+        return isset( $this->handlers[ $id ] );
+    }
+
+    /**
+     * Get a specific handler configuration
+     *
+     * @param string $id Handler identifier
+     *
+     * @return array|null Handler configuration or null if not found
+     * @since 2.0.0
+     */
+    public function get_handler( string $id ): ?array {
+        return $this->handlers[ $id ] ?? null;
+    }
+
 }
